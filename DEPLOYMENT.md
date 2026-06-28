@@ -1,192 +1,208 @@
-# Free Deployment Guide — AI UPSC Study OS
+# Deployment Guide — AI UPSC Study OS
 
-Deploy for **$0/month** using free tiers:
-
-| Part | Service | Free tier |
-|------|---------|-----------|
-| Frontend | [Vercel](https://vercel.com) | Unlimited hobby projects |
-| Backend | [Render](https://render.com) | 750 hrs/month (sleeps when idle) |
-| Database | [Neon](https://neon.tech) | 512 MB PostgreSQL |
-
-**Total cost:** $0 (no credit card on Neon/Vercel; Render may ask for card but free tier works)
+**Stack:** Vercel (frontend) + Render (backend) + Neon (database) — **$0/month**
 
 ---
 
-## Overview
+## Prerequisites
 
+- GitHub account
+- [Neon](https://neon.tech) — database (connected)
+- [Render](https://render.com) — backend
+- [Vercel](https://vercel.com) — frontend
+
+---
+
+## Step 1 — Push to GitHub
+
+```powershell
+cd f:\Developer
+git init
+git add .
+git commit -m "AI UPSC Study OS — production ready"
+git remote add origin https://github.com/YOUR_USERNAME/upsc-study-os.git
+git push -u origin main
 ```
-User → Vercel (Angular) → Render (FastAPI) → Neon (PostgreSQL)
+
+Never commit `backend/.env` (already in `.gitignore`).
+
+---
+
+## Step 2 — Neon database
+
+1. Neon Console → your project → **Connection details**
+2. Copy **Pooled connection** string
+3. Ensure it ends with `?sslmode=require`
+
+Local / Render variable:
+
+```env
+DATABASE_URL=postgresql://...@ep-xxx-pooler....neon.tech/neondb?sslmode=require
+```
+
+**Initialize schema** (once):
+
+```powershell
+cd backend
+python -m alembic upgrade head
+python scripts/seed_data.py
 ```
 
 ---
 
-## Part 1 — Database (Neon) ~5 min
+## Step 3 — Deploy backend (Render)
 
-1. Sign up at https://neon.tech
-2. **New Project** → name: `upsc-study-os` → region: closest to you
-3. Copy the **connection string** (looks like):
-   ```
-   postgresql://user:pass@ep-xxx.region.aws.neon.tech/neondb?sslmode=require
-   ```
-4. Save it — you'll use this as `DATABASE_URL` on Render.
+### Create service
 
-> Neon URLs often end with `/neondb`. You can keep that database name or create `upsc_study_os` in the SQL editor.
+1. https://dashboard.render.com → **New +** → **Web Service**
+2. Connect GitHub repo
+3. Settings:
 
----
+| Field | Value |
+|-------|--------|
+| Root Directory | `backend` |
+| Runtime | **Docker** |
+| Plan | **Free** |
+| Health Check Path | `/health` |
 
-## Part 2 — Backend (Render) ~10 min
+Or use **Blueprint** with root `render.yaml`.
 
-### Option A — Deploy from GitHub (recommended)
+### Environment variables
 
-1. Push your code to GitHub (if not already):
-   ```powershell
-   cd f:\Developer
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git remote add origin https://github.com/YOUR_USERNAME/upsc-study-os.git
-   git push -u origin main
-   ```
-
-2. Go to https://dashboard.render.com → **New +** → **Blueprint**
-3. Connect your repo — Render reads `render.yaml` at the project root
-4. Or manually: **New Web Service** → connect repo → set:
-   - **Root Directory:** `backend`
-   - **Runtime:** Docker *(or Python)*
-   - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:**
-     ```bash
-     alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
-     ```
-
-### Environment variables (Render → Environment)
+Copy from `backend/.env.production.example`:
 
 | Key | Value |
 |-----|--------|
-| `DATABASE_URL` | Neon connection string (paste from Part 1) |
-| `SECRET_KEY` | Run: `python -c "import secrets; print(secrets.token_hex(32))"` |
-| `DEBUG` | `false` |
+| `DATABASE_URL` | Neon pooled connection string |
+| `SECRET_KEY` | `python -c "import secrets; print(secrets.token_hex(32))"` |
 | `ENVIRONMENT` | `production` |
-| `ALLOWED_ORIGINS` | `https://YOUR-APP.vercel.app` *(update after Vercel deploy)* |
-| `OPENAI_API_KEY` | Your OpenAI key *(optional — demo mode works without)* |
+| `DEBUG` | `false` |
+| `ALLOWED_ORIGINS` | `https://YOUR-APP.vercel.app` *(set after Step 4)* |
+| `FRONTEND_URL` | `https://YOUR-APP.vercel.app` |
+| `OPENAI_API_KEY` | Optional |
 | `GOOGLE_CLIENT_ID` | Optional |
 | `GOOGLE_CLIENT_SECRET` | Optional |
 
-5. Deploy → copy your backend URL, e.g. `https://upsc-study-os-api.onrender.com`
+Deploy → note URL: `https://upsc-study-os-api.onrender.com`
 
-6. **Seed data** (one time) — Render Shell or local with production `DATABASE_URL`:
-   ```bash
-   python scripts/seed_data.py
-   ```
+`start.sh` runs `alembic upgrade head` on every deploy.
 
-7. Test: `https://YOUR-BACKEND.onrender.com/health`
+**Seed production data** (Render Shell, once):
 
-> **Note:** Free Render services **sleep after ~15 min** of no traffic. First request may take 30–60 seconds (cold start).
-
----
-
-## Part 3 — Frontend (Vercel) ~5 min
-
-1. Sign up at https://vercel.com → **Add New Project**
-2. Import your GitHub repo
-3. Settings:
-   - **Framework Preset:** Angular
-   - **Root Directory:** `frontend`
-   - **Build Command:** `npm run build:prod`
-   - **Output Directory:** `dist/upsc-study-os/browser`
-
-4. **Environment Variables** (Vercel → Settings → Environment Variables):
-
-   | Name | Value |
-   |------|--------|
-   | `NG_APP_API_URL` | `https://YOUR-BACKEND.onrender.com/api/v1` |
-
-   Then update `frontend/src/environments/environment.prod.ts` to use your backend URL (see below).
-
-5. Deploy → copy URL, e.g. `https://upsc-study-os.vercel.app`
-
-6. **Update Render CORS** — go back to Render env vars:
-   ```
-   ALLOWED_ORIGINS=https://upsc-study-os.vercel.app
-   ```
-   Redeploy backend if needed.
-
----
-
-## Part 4 — Production config checklist
-
-### `frontend/src/environments/environment.prod.ts`
-
-```typescript
-export const environment = {
-  production: true,
-  apiUrl: 'https://YOUR-BACKEND.onrender.com/api/v1',
-  googleClientId: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
-  appName: 'AI UPSC Study OS',
-};
+```bash
+python scripts/seed_data.py
 ```
 
-Commit and push → Vercel auto-redeploys.
+Test: `https://YOUR-API.onrender.com/health`
 
-### Google OAuth (optional)
+---
 
-In Google Cloud Console → OAuth client → **Authorized redirect URIs:**
+## Step 4 — Deploy frontend (Vercel)
+
+1. https://vercel.com → **Add New Project** → import repo
+2. Settings:
+
+| Field | Value |
+|-------|--------|
+| Root Directory | `frontend` |
+| Framework | Angular |
+| Build Command | `npm run build:prod` |
+| Output Directory | `dist/upsc-study-os/browser` |
+| Install Command | `npm install --legacy-peer-deps` |
+
+3. **Environment Variables** (Vercel → Settings → Environment Variables):
+
+| Name | Value | Environments |
+|------|--------|--------------|
+| `NG_APP_API_URL` | `https://YOUR-API.onrender.com/api/v1` | Production |
+| `NG_APP_GOOGLE_CLIENT_ID` | Your Google client ID *(optional)* | Production |
+
+The build runs `scripts/inject-env.mjs` which writes `environment.prod.ts` automatically.
+
+4. Deploy → copy URL: `https://your-app.vercel.app`
+
+---
+
+## Step 5 — Link frontend ↔ backend
+
+1. **Render** → update:
+   ```env
+   ALLOWED_ORIGINS=https://your-app.vercel.app
+   FRONTEND_URL=https://your-app.vercel.app
+   ```
+2. **Manual Deploy** on Render
+3. Open Vercel URL → Register → test PYQ / AI Mentor
+
+---
+
+## Step 6 — Google OAuth (optional)
+
+Google Cloud Console → OAuth client:
+
+**Authorized JavaScript origins:**
 ```
-https://YOUR-APP.vercel.app/auth/google/callback
+https://your-app.vercel.app
+```
+
+**Authorized redirect URIs:**
+```
+https://your-app.vercel.app/auth/google/callback
+```
+
+Set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` on Render and `NG_APP_GOOGLE_CLIENT_ID` on Vercel.
+
+---
+
+## Local development (Neon)
+
+```powershell
+cd backend
+copy .env.example .env
+# Edit DATABASE_URL with Neon string
+pip install -r requirements.txt
+python -m alembic upgrade head
+uvicorn app.main:app --reload
+```
+
+```powershell
+cd frontend
+copy src\environments\environment.example.ts src\environments\environment.ts
+npm install --legacy-peer-deps
+npm start
 ```
 
 ---
 
-## Part 5 — Verify production
+## Production checklist
 
-1. Open Vercel URL → Register a new account
-2. Dashboard loads with stats
-3. PYQ Analyzer → search `Monsoon` (after seed)
-4. AI Mentor → sends a response (demo or OpenAI)
-
----
-
-## Alternative free backends
-
-| Service | Pros | Cons |
-|---------|------|------|
-| **Render** | Easy, Docker support | Cold starts |
-| **Fly.io** | Fast, global | Free tier limits changed |
-| **Railway** | Simple UI | Limited free credits |
-| **Koyeb** | Free tier | Smaller community |
-
-Database alternatives: **Supabase** (Postgres + auth), **ElephantSQL** (small free DB).
-
----
-
-## Optional: Redis (not required for MVP)
-
-Revision/planner work without Redis. If you add caching later, use **Upstash Redis** (free tier).
+- [ ] `SECRET_KEY` is random 32+ chars on Render
+- [ ] `DEBUG=false`, `ENVIRONMENT=production`
+- [ ] `ALLOWED_ORIGINS` = exact Vercel URL (no trailing slash)
+- [ ] `NG_APP_API_URL` set on Vercel
+- [ ] Alembic migrations ran (automatic via `start.sh`)
+- [ ] `python scripts/seed_data.py` run once on production
+- [ ] Rotate Neon password if it was ever exposed
 
 ---
 
 ## Troubleshooting
 
-| Problem | Fix |
-|---------|-----|
-| CORS error | Set `ALLOWED_ORIGINS` on Render to exact Vercel URL (no trailing slash) |
-| 502 / timeout on first load | Render cold start — wait 60s and retry |
-| Database SSL error | Add `?sslmode=require` to Neon `DATABASE_URL` |
-| API 401 | Register/login again; check `apiUrl` in `environment.prod.ts` |
-| Migrations failed | Run `alembic upgrade head` in Render shell with `DATABASE_URL` set |
+| Issue | Fix |
+|-------|-----|
+| CORS error | Match `ALLOWED_ORIGINS` to Vercel URL exactly |
+| 502 / slow API | Render free tier cold start — wait 60s |
+| App shows localhost API | Set `NG_APP_API_URL` on Vercel, redeploy |
+| `SECRET_KEY` startup error | Use 32+ char random secret in production |
+| Empty PYQs | Run `seed_data.py` on Render shell |
 
 ---
 
-## Security before going public
+## Architecture
 
-- [ ] Change `SECRET_KEY` to a random 32+ char string
-- [ ] Set `DEBUG=false` on Render
-- [ ] Never commit `.env` or API keys to GitHub
-- [ ] Add `.env` to `.gitignore` if missing
-
----
-
-## Custom domain (optional, still free on Vercel)
-
-Vercel → Project → Domains → add your domain.  
-Update `ALLOWED_ORIGINS` on Render to include the new domain.
+```
+Browser → Vercel (Angular)
+              ↓ HTTPS
+         Render (FastAPI + Docker)
+              ↓ SSL
+         Neon (PostgreSQL pooled)
+```

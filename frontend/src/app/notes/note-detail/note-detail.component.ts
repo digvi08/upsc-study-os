@@ -49,7 +49,7 @@ import { SkeletonComponent } from '../../shared/components/skeleton/skeleton.com
             </div>
           }
 
-          @if (note()!.flashcards?.length) {
+          @if (note()!.flashcards.length) {
             <div>
               <h3 class="text-sm font-semibold text-white mb-3">Flashcards ({{ note()!.flashcards.length }})</h3>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -1,13 +1,12 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DashboardService } from '../services/dashboard.service';
-import { ProgressRingComponent } from '../shared/components/progress-ring/progress-ring.component';
 import { StatCardComponent } from '../shared/components/stat-card/stat-card.component';
 
 @Component({
   selector: 'app-analytics',
   standalone: true,
-  imports: [CommonModule, ProgressRingComponent, StatCardComponent],
+  imports: [CommonModule, StatCardComponent],
   template: `
     <div class="space-y-6 animate-fade-in">
       <div>

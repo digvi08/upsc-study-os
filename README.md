@@ -116,7 +116,17 @@ Once backend is running, visit: `http://localhost:8000/docs`
 
 ## Free Deployment (Vercel + Render + Neon)
 
-See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for a step-by-step guide to deploy at **$0/month**.
+Production-ready config included (`render.yaml`, `vercel.json`, env injection).
+
+See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for the full deploy checklist.
+
+**Quick env vars:**
+
+| Platform | Key | Example |
+|----------|-----|---------|
+| Neon | `DATABASE_URL` | `postgresql://...@ep-xxx-pooler.neon.tech/neondb?sslmode=require` |
+| Render | `ALLOWED_ORIGINS` | `https://your-app.vercel.app` |
+| Vercel | `NG_APP_API_URL` | `https://your-api.onrender.com/api/v1` |
 
 ## License
 
