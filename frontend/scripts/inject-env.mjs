@@ -9,15 +9,20 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const outFile = path.join(__dirname, '../src/environments/environment.prod.ts');
 
-const apiUrl =
-  process.env.NG_APP_API_URL ||
-  process.env.API_URL ||
-  'http://localhost:8000/api/v1';
+const apiUrl = process.env.NG_APP_API_URL || process.env.API_URL;
+
+if (!apiUrl) {
+  console.error(
+    '[inject-env] ERROR: NG_APP_API_URL or API_URL is required for production builds.',
+  );
+  console.error(
+    'Set NG_APP_API_URL=https://your-api.example.com/api/v1 before running npm run build:prod.',
+  );
+  process.exit(1);
+}
 
 const googleClientId =
-  process.env.NG_APP_GOOGLE_CLIENT_ID ||
-  process.env.GOOGLE_CLIENT_ID ||
-  '';
+  process.env.NG_APP_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '';
 
 const escape = (s) => s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 

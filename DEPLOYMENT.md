@@ -117,7 +117,7 @@ Test: `https://YOUR-API.onrender.com/health`
 | `NG_APP_API_URL` | `https://YOUR-API.onrender.com/api/v1` | Production |
 | `NG_APP_GOOGLE_CLIENT_ID` | Your Google client ID *(optional)* | Production |
 
-The build runs `scripts/inject-env.mjs` which writes `environment.prod.ts` automatically.
+The build runs `scripts/inject-env.mjs` which writes `environment.prod.ts` automatically. In production, `NG_APP_API_URL` is required and the build will now fail if it is missing.
 
 4. Deploy → copy URL: `https://your-app.vercel.app`
 
