@@ -1,34 +1,49 @@
 """Database connection and session management."""
-from sqlalchemy import create_engine, event
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy import create_engine
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from sqlalchemy.pool import QueuePool
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from typing import Generator
 import logging
 
 from app.config import settings
 
+
+@compiles(JSONB, "sqlite")
+def _compile_jsonb_for_sqlite(type_, compiler, **kw):
+    return "JSON"
+
+
+@compiles(UUID, "sqlite")
+def _compile_uuid_for_sqlite(type_, compiler, **kw):
+    return "CHAR(36)"
+
 logger = logging.getLogger(__name__)
 
-# Create engine with connection pooling
+# Neon pooler: keep SQLAlchemy pool small to avoid exhausting serverless connections
+_pool_size = settings.database_pool_size
+_max_overflow = settings.database_max_overflow
+if settings.uses_neon_pooler:
+    _pool_size = min(_pool_size, 5)
+    _max_overflow = min(_max_overflow, 5)
+
 engine = create_engine(
     settings.database_url,
     poolclass=QueuePool,
-    pool_size=settings.database_pool_size,
-    max_overflow=settings.database_max_overflow,
-    pool_pre_ping=True,  # Verify connections before use
-    pool_recycle=3600,   # Recycle connections every hour
+    pool_size=_pool_size,
+    max_overflow=_max_overflow,
+    pool_pre_ping=True,
+    pool_recycle=300 if settings.uses_neon_pooler else 3600,
     echo=settings.debug,
 )
 
-# Session factory
 SessionLocal = sessionmaker(
     autocommit=False,
     autoflush=False,
     bind=engine,
 )
 
-# Base class for all models
 Base = declarative_base()
 
 
@@ -46,8 +61,7 @@ def get_db() -> Generator[Session, None, None]:
 
 
 def init_db() -> None:
-    """Initialize database tables."""
-    # Import all models so SQLAlchemy registers them before create_all
+    """Create tables if missing (development fallback; production uses Alembic)."""
     from app.models import (  # noqa: F401
         User, Subject, Topic, PYQ, Note,
         RevisionHistory, StudyPlan, StudyTask,
@@ -55,4 +69,4 @@ def init_db() -> None:
         UserAnalytics, DailyStudyLog, MockTest,
     )
     Base.metadata.create_all(bind=engine)
-    logger.info("Database tables created successfully")
+    logger.info("Database tables verified/created")

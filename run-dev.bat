@@ -1,0 +1,3 @@
+@echo off
+echo Starting AI UPSC Study OS with Docker Compose...
+docker compose up --build 2>nul || docker-compose up --build

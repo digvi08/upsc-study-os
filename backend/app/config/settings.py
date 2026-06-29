@@ -1,7 +1,15 @@
 """Application configuration using Pydantic Settings."""
 from functools import lru_cache
 from typing import List, Optional
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+INSECURE_SECRET_PLACEHOLDERS = {
+    "change-this-to-a-random-32-char-secret-key-before-production",
+    "your-super-secret-key-change-in-production-min-32-chars",
+    "your-super-secret-key-change-in-production",
+}
 
 
 class Settings(BaseSettings):
@@ -35,7 +43,7 @@ class Settings(BaseSettings):
     # Google OAuth
     google_client_id: Optional[str] = None
     google_client_secret: Optional[str] = None
-    google_redirect_uri: str = "http://localhost:8000/api/v1/auth/google/callback"
+    google_redirect_uri: Optional[str] = None
 
     # OpenAI
     openai_api_key: Optional[str] = None
@@ -68,12 +76,40 @@ class Settings(BaseSettings):
     smtp_user: Optional[str] = None
     smtp_password: Optional[str] = None
 
-    # Frontend URL (used in emails / OAuth redirects)
+    # Frontend URL (OAuth redirects, emails)
     frontend_url: str = "http://localhost:4200"
 
     @property
+    def is_production(self) -> bool:
+        return self.environment.lower() == "production"
+
+    @property
     def cors_origins(self) -> List[str]:
-        return [origin.strip() for origin in self.allowed_origins.split(",")]
+        return [origin.strip() for origin in self.allowed_origins.split(",") if origin.strip()]
+
+    @property
+    def google_oauth_redirect_uri(self) -> str:
+        """Redirect URI sent to Google — must match the frontend OAuth callback."""
+        if self.google_redirect_uri:
+            return self.google_redirect_uri
+        base = self.frontend_url.rstrip("/")
+        return f"{base}/auth/google/callback"
+
+    @property
+    def uses_neon_pooler(self) -> bool:
+        return "neon.tech" in self.database_url and "pooler" in self.database_url
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self) -> "Settings":
+        if self.is_production:
+            if self.secret_key in INSECURE_SECRET_PLACEHOLDERS or len(self.secret_key) < 32:
+                raise ValueError(
+                    "SECRET_KEY must be a random 32+ character string in production. "
+                    "Run: python -c \"import secrets; print(secrets.token_hex(32))\""
+                )
+            if self.debug:
+                raise ValueError("Set DEBUG=false in production")
+        return self
 
 
 @lru_cache()

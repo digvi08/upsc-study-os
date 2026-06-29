@@ -41,6 +41,17 @@ upsc-study-os/
 ```
 
 ## Quick Start
+ 
+### Fastest way: Run the full stack with Docker
+```bash
+docker compose up --build
+```
+Open the app at `http://localhost` once the backend and frontend services are ready.
+
+When you're done, stop the stack with:
+```bash
+docker compose down
+```
 
 ### Prerequisites
 - Node.js 20+
@@ -48,28 +59,41 @@ upsc-study-os/
 - PostgreSQL 15+
 - Docker (optional)
 
-### Backend Setup
+### Shortcut scripts
+If you are on Windows, run:
+```powershell
+.\run-dev.bat
+```
+On macOS/Linux, run:
 ```bash
-cd backend
-python -m venv venv
-venv\Scripts\activate        # Windows
-pip install -r requirements.txt
-cp .env.example .env         # Fill in your values
-alembic upgrade head
-uvicorn app.main:app --reload
+./run-dev.sh
+```
+Then stop with:
+```bash
+docker compose down
 ```
 
-### Frontend Setup
+### Local development (optional)
+If you prefer running backend and frontend separately:
+
+#### Backend
+```bash
+cd backend
+python -m venv .venv
+.venv\Scripts\activate   # Windows
+pip install -r requirements.txt
+cp .env.example .env      # On Windows use: copy .env.example .env
+# Update .env values as needed
+alembic upgrade head
+python -m uvicorn app.main:app --reload
+```
+
+#### Frontend
 ```bash
 cd frontend
 npm install
-cp src/environments/environment.example.ts src/environments/environment.ts
-ng serve
-```
-
-### Docker (Full Stack)
-```bash
-docker-compose up --build
+cp src/environments/environment.example.ts src/environments/environment.ts  # On Windows use: copy src\environments\environment.example.ts src\environments\environment.ts
+npm start
 ```
 
 ## Environment Variables
@@ -116,7 +140,17 @@ Once backend is running, visit: `http://localhost:8000/docs`
 
 ## Free Deployment (Vercel + Render + Neon)
 
-See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for a step-by-step guide to deploy at **$0/month**.
+Production-ready config included (`render.yaml`, `vercel.json`, env injection).
+
+See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for the full deploy checklist.
+
+**Quick env vars:**
+
+| Platform | Key | Example |
+|----------|-----|---------|
+| Neon | `DATABASE_URL` | `postgresql://...@ep-xxx-pooler.neon.tech/neondb?sslmode=require` |
+| Render | `ALLOWED_ORIGINS` | `https://your-app.vercel.app` |
+| Vercel | `NG_APP_API_URL` | `https://your-api.onrender.com/api/v1` |
 
 ## License
 

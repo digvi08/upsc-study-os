@@ -1,8 +1,11 @@
-"""Seed sample PYQ and current affairs data for development."""
+"""Seed sample PYQ and current affairs data for development/production."""
 import sys
 from pathlib import Path
+from dotenv import load_dotenv
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+_backend_root = Path(__file__).resolve().parents[1]
+load_dotenv(_backend_root / ".env")
+sys.path.insert(0, str(_backend_root))
 
 from app.database.connection import SessionLocal, init_db
 from app.models.pyq import PYQ, ExamType, QuestionType
