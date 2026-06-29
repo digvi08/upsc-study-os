@@ -41,6 +41,17 @@ upsc-study-os/
 ```
 
 ## Quick Start
+ 
+### Fastest way: Run the full stack with Docker
+```bash
+docker compose up --build
+```
+Open the app at `http://localhost` once the backend and frontend services are ready.
+
+When you're done, stop the stack with:
+```bash
+docker compose down
+```
 
 ### Prerequisites
 - Node.js 20+
@@ -48,28 +59,41 @@ upsc-study-os/
 - PostgreSQL 15+
 - Docker (optional)
 
-### Backend Setup
+### Shortcut scripts
+If you are on Windows, run:
+```powershell
+.\run-dev.bat
+```
+On macOS/Linux, run:
 ```bash
-cd backend
-python -m venv venv
-venv\Scripts\activate        # Windows
-pip install -r requirements.txt
-cp .env.example .env         # Fill in your values
-alembic upgrade head
-uvicorn app.main:app --reload
+./run-dev.sh
+```
+Then stop with:
+```bash
+docker compose down
 ```
 
-### Frontend Setup
+### Local development (optional)
+If you prefer running backend and frontend separately:
+
+#### Backend
+```bash
+cd backend
+python -m venv .venv
+.venv\Scripts\activate   # Windows
+pip install -r requirements.txt
+cp .env.example .env      # On Windows use: copy .env.example .env
+# Update .env values as needed
+alembic upgrade head
+python -m uvicorn app.main:app --reload
+```
+
+#### Frontend
 ```bash
 cd frontend
 npm install
-cp src/environments/environment.example.ts src/environments/environment.ts
-ng serve
-```
-
-### Docker (Full Stack)
-```bash
-docker-compose up --build
+cp src/environments/environment.example.ts src/environments/environment.ts  # On Windows use: copy src\environments\environment.example.ts src\environments\environment.ts
+npm start
 ```
 
 ## Environment Variables

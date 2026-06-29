@@ -1,5 +1,6 @@
 # Environment & secrets
 backend/.env
+backend/*.db
 # environment.ts is committed with safe localhost defaults
 
 # Python

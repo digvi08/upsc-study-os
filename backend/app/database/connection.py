@@ -1,11 +1,23 @@
 """Database connection and session management."""
 from sqlalchemy import create_engine
+from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.orm import declarative_base, sessionmaker, Session
 from sqlalchemy.pool import QueuePool
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 from typing import Generator
 import logging
 
 from app.config import settings
+
+
+@compiles(JSONB, "sqlite")
+def _compile_jsonb_for_sqlite(type_, compiler, **kw):
+    return "JSON"
+
+
+@compiles(UUID, "sqlite")
+def _compile_uuid_for_sqlite(type_, compiler, **kw):
+    return "CHAR(36)"
 
 logger = logging.getLogger(__name__)
 
