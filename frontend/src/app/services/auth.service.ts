@@ -39,10 +39,10 @@ export class AuthService {
     );
   }
 
-  googleLogin(code: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.API}/auth/google`, { code }).pipe(
-      tap(res => this.handleAuthSuccess(res)),
-    );
+  googleLogin(code: string, redirectUri?: string): Observable<AuthResponse> {
+    return this.http
+      .post<AuthResponse>(`${this.API}/auth/google`, { code, redirect_uri: redirectUri })
+      .pipe(tap(res => this.handleAuthSuccess(res)));
   }
 
   refreshToken(): Observable<AuthTokens> {

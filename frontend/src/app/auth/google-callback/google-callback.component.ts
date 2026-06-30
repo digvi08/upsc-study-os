@@ -29,7 +29,8 @@ export class GoogleCallbackComponent implements OnInit {
       this.router.navigate(['/auth/login']);
       return;
     }
-    this.authService.googleLogin(code).subscribe({
+    const redirectUri = window.location.origin + '/auth/google/callback';
+    this.authService.googleLogin(code, redirectUri).subscribe({
       next: () => {
         this.notifications.success('Signed in with Google');
         this.router.navigate(['/dashboard']);

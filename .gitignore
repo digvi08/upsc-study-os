@@ -1,6 +1,6 @@
 # Environment & secrets
 backend/.env
-frontend/src/environments/environment.ts
+# environment.ts is committed with safe localhost defaults
 
 # Python
 backend/venv/

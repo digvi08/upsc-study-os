@@ -1,5 +1,4 @@
-# Render Blueprint — free tier backend
-# Deploy: https://dashboard.render.com → New → Blueprint → connect repo
+# Render Blueprint — https://dashboard.render.com → New → Blueprint
 services:
   - type: web
     name: upsc-study-os-api
@@ -19,7 +18,12 @@ services:
       - key: ENVIRONMENT
         value: production
       - key: ALLOWED_ORIGINS
-        value: https://your-app.vercel.app
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
       - key: OPENAI_API_KEY
         sync: false
-    # Migrations + server run via backend/start.sh (Dockerfile CMD)
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false

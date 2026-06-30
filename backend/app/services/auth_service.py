@@ -112,7 +112,7 @@ class AuthService:
                 "code": code,
                 "client_id": settings.google_client_id,
                 "client_secret": settings.google_client_secret,
-                "redirect_uri": redirect_uri or settings.google_redirect_uri,
+                "redirect_uri": redirect_uri or settings.google_oauth_redirect_uri,
                 "grant_type": "authorization_code",
             })
 

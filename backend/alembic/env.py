@@ -4,6 +4,11 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 import os
 import sys
+from pathlib import Path
+from dotenv import load_dotenv
+
+# Load backend/.env so DATABASE_URL points to Neon (or local Postgres)
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 # Add project root to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
