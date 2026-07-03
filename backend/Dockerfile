@@ -23,6 +23,6 @@ USER appuser
 
 EXPOSE 8000
 
-RUN chmod +x start.sh
+RUN sed -i 's/\r$//' start.sh && chmod +x start.sh
 
-CMD ["./start.sh"]
+CMD ["sh", "start.sh"]
