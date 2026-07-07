@@ -19,7 +19,7 @@ RUN npm run build:prod
 # Production stage
 FROM nginx:alpine
 
-COPY --from=builder /app/dist/upsc-study-os/browser /usr/share/nginx/html
+COPY --from=builder /app/dist/upsc-study-os /usr/share/nginx/html
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 

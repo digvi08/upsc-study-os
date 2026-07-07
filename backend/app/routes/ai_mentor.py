@@ -17,13 +17,12 @@ router = APIRouter(prefix="/ai-mentor", tags=["AI Mentor"])
 @router.post("/chat", response_model=AIQueryResponse)
 async def chat(
     request: AIQueryRequest,
-    history: Optional[List[dict]] = None,
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
     """Chat with the AI mentor."""
     mentor = MentorService()
-    response = await mentor.get_response(request, history)
+    response = await mentor.get_response(request)
 
     # Update AI usage analytics
     from app.models.analytics import UserAnalytics
@@ -40,14 +39,13 @@ async def chat(
 @router.post("/chat/stream")
 async def chat_stream(
     request: AIQueryRequest,
-    history: Optional[List[dict]] = None,
     current_user: User = Depends(get_current_user),
 ):
     """Stream AI mentor response (Server-Sent Events)."""
     mentor = MentorService()
 
     async def generate():
-        async for chunk in mentor.stream_response(request, history):
+        async for chunk in mentor.stream_response(request):
             yield f"data: {json.dumps({'content': chunk})}\n\n"
         yield "data: [DONE]\n\n"
 

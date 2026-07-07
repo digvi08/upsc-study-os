@@ -23,6 +23,14 @@ services:
         sync: false
       - key: OPENAI_API_KEY
         sync: false
+      - key: GEMMINI_API_BASE_URL
+        sync: false
+      - key: GEMMINI_API_KEY
+        sync: false
+      - key: GEMMINI_MODEL
+        sync: false
+      - key: GEMMINI_EMBEDDING_MODEL
+        sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false
       - key: GOOGLE_CLIENT_SECRET

@@ -1,6 +1,6 @@
 {
   "buildCommand": "npm run build:prod",
-  "outputDirectory": "dist/upsc-study-os/browser",
+  "outputDirectory": "dist/upsc-study-os",
   "framework": "angular",
   "installCommand": "npm install --legacy-peer-deps",
   "rewrites": [

@@ -88,7 +88,6 @@ class TestTopics:
     def test_create_topic(self, client: TestClient, auth_headers):
         subject_id = self._create_subject(client, auth_headers)
         response = client.post(f"/api/v1/subjects/{subject_id}/topics", json={
-            "subject_id": subject_id,
             "name": "Monsoon",
             "importance_score": 8,
             "priority": "high",
@@ -102,7 +101,6 @@ class TestTopics:
     def test_update_topic_status(self, client: TestClient, auth_headers):
         subject_id = self._create_subject(client, auth_headers)
         create_resp = client.post(f"/api/v1/subjects/{subject_id}/topics", json={
-            "subject_id": subject_id,
             "name": "El Niño",
             "importance_score": 7,
             "priority": "high",

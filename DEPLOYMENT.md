@@ -1,6 +1,6 @@
 # Deployment Guide — AI UPSC Study OS
 
-**Stack:** Vercel (frontend) + Render (backend) + Neon (database) — **$0/month**
+**Stack:** Vercel (frontend) + Railway (backend) + Neon (database) — **$0/month**
 
 ---
 
@@ -8,7 +8,7 @@
 
 - GitHub account
 - [Neon](https://neon.tech) — database (connected)
-- [Render](https://render.com) — backend
+- [Railway](https://railway.com) — backend
 - [Vercel](https://vercel.com) — frontend
 
 ---
@@ -34,7 +34,7 @@ Never commit `backend/.env` (already in `.gitignore`).
 2. Copy **Pooled connection** string
 3. Ensure it ends with `?sslmode=require`
 
-Local / Render variable:
+Local / Railway variable:
 
 ```env
 DATABASE_URL=postgresql://...@ep-xxx-pooler....neon.tech/neondb?sslmode=require
@@ -50,22 +50,15 @@ python scripts/seed_data.py
 
 ---
 
-## Step 3 — Deploy backend (Render)
+## Step 3 — Deploy backend (Railway)
 
 ### Create service
 
-1. https://dashboard.render.com → **New +** → **Web Service**
-2. Connect GitHub repo
-3. Settings:
-
-| Field | Value |
-|-------|--------|
-| Root Directory | `backend` |
-| Runtime | **Docker** |
-| Plan | **Free** |
-| Health Check Path | `/health` |
-
-Or use **Blueprint** with root `render.yaml`.
+1. https://railway.com → **New Project** → **Deploy from GitHub**
+2. Connect your `digvi08/upsc-study-os` repo
+3. Set the service root to `backend`
+4. Railway will detect the `Dockerfile` and build the backend automatically
+5. Optional: set the health check path to `/health`
 
 ### Environment variables
 
@@ -81,22 +74,20 @@ Copy from `backend/.env.production.example`:
 | `FRONTEND_URL` | `https://YOUR-APP.vercel.app` |
 | `AI_PROVIDER` | Optional (`auto`, `openai`, or `gemmini`) |
 | `OPENAI_API_KEY` | Optional |
-| `GEMMINI_API_BASE_URL` | Optional |
-| `GEMMINI_API_KEY` | Optional |
+| `GEMMINI_API_BASE_URL` | Optional — your Gemmini-compatible API base URL, e.g. `https://your-gemmini-host/v1` |
+| `GEMMINI_API_KEY` | Optional — your Gemmini service auth key if required |
 | `GOOGLE_CLIENT_ID` | Optional |
 | `GOOGLE_CLIENT_SECRET` | Optional |
 
-Deploy → note URL: `https://upsc-study-os-api.onrender.com`
+Railway deploys the backend using `backend/Dockerfile`.
 
-`start.sh` runs `alembic upgrade head` on every deploy.
-
-**Seed production data** (Render Shell, once):
+**Seed production data** (Railway shell, once):
 
 ```bash
 python scripts/seed_data.py
 ```
 
-Test: `https://YOUR-API.onrender.com/health`
+Test: `https://YOUR-API.onrailway.app/health`
 
 ---
 
@@ -110,14 +101,14 @@ Test: `https://YOUR-API.onrender.com/health`
 | Root Directory | `frontend` |
 | Framework | Angular |
 | Build Command | `npm run build:prod` |
-| Output Directory | `dist/upsc-study-os/browser` |
+| Output Directory | `dist/upsc-study-os` |
 | Install Command | `npm install --legacy-peer-deps` |
 
 3. **Environment Variables** (Vercel → Settings → Environment Variables):
 
 | Name | Value | Environments |
 |------|--------|--------------|
-| `NG_APP_API_URL` | `https://YOUR-API.onrender.com/api/v1` | Production |
+| `NG_APP_API_URL` | `https://YOUR-API.onrailway.app/api/v1` | Production |
 | `NG_APP_GOOGLE_CLIENT_ID` | Your Google client ID *(optional)* | Production |
 
 The build runs `scripts/inject-env.mjs` which writes `environment.prod.ts` automatically. In production, `NG_APP_API_URL` is required and the build will now fail if it is missing.
@@ -128,12 +119,12 @@ The build runs `scripts/inject-env.mjs` which writes `environment.prod.ts` autom
 
 ## Step 5 — Link frontend ↔ backend
 
-1. **Render** → update:
+1. **Railway** → update:
    ```env
    ALLOWED_ORIGINS=https://your-app.vercel.app
    FRONTEND_URL=https://your-app.vercel.app
    ```
-2. **Manual Deploy** on Render
+2. **Manual Deploy** on Railway
 3. Open Vercel URL → Register → test PYQ / AI Mentor
 
 ---
@@ -152,7 +143,7 @@ https://your-app.vercel.app
 https://your-app.vercel.app/auth/google/callback
 ```
 
-Set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` on Render and `NG_APP_GOOGLE_CLIENT_ID` on Vercel.
+Set `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` on Railway and `NG_APP_GOOGLE_CLIENT_ID` on Vercel.
 
 ---
 
@@ -178,7 +169,7 @@ npm start
 
 ## Production checklist
 
-- [ ] `SECRET_KEY` is random 32+ chars on Render
+- [ ] `SECRET_KEY` is random 32+ chars on Railway
 - [ ] `DEBUG=false`, `ENVIRONMENT=production`
 - [ ] `ALLOWED_ORIGINS` = exact Vercel URL (no trailing slash)
 - [ ] `NG_APP_API_URL` set on Vercel
@@ -193,10 +184,10 @@ npm start
 | Issue | Fix |
 |-------|-----|
 | CORS error | Match `ALLOWED_ORIGINS` to Vercel URL exactly |
-| 502 / slow API | Render free tier cold start — wait 60s |
+| 502 / slow API | Railway free tier cold start — wait 60s |
 | App shows localhost API | Set `NG_APP_API_URL` on Vercel, redeploy |
 | `SECRET_KEY` startup error | Use 32+ char random secret in production |
-| Empty PYQs | Run `seed_data.py` on Render shell |
+| Empty PYQs | Run `seed_data.py` on Railway shell |
 
 ---
 
@@ -205,7 +196,7 @@ npm start
 ```
 Browser → Vercel (Angular)
               ↓ HTTPS
-         Render (FastAPI + Docker)
+         Railway (FastAPI + Docker)
               ↓ SSL
          Neon (PostgreSQL pooled)
 ```

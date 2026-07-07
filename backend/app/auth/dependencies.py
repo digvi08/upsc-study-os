@@ -1,5 +1,5 @@
 """FastAPI auth dependencies."""
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 import uuid
@@ -8,15 +8,21 @@ from app.database import get_db
 from app.models.user import User, UserRole
 from app.auth.jwt_handler import verify_access_token
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 def get_current_user(
+    request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: Session = Depends(get_db),
 ) -> User:
     """Get the currently authenticated user."""
-    token = credentials.credentials
+    token = credentials.credentials if credentials else request.query_params.get("token")
+    if not token:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authenticated",
+        )
     payload = verify_access_token(token)
 
     user_id = payload.get("sub")
