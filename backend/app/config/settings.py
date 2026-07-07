@@ -45,10 +45,19 @@ class Settings(BaseSettings):
     google_client_secret: Optional[str] = None
     google_redirect_uri: Optional[str] = None
 
+    # AI provider selection
+    ai_provider: str = "auto"
+
     # OpenAI
     openai_api_key: Optional[str] = None
     openai_model: str = "gpt-4o"
     openai_embedding_model: str = "text-embedding-3-small"
+
+    # Gemmini (OpenAI-compatible endpoint)
+    gemmini_api_base_url: Optional[str] = None
+    gemmini_api_key: Optional[str] = None
+    gemmini_model: str = "gemmini-1"
+    gemmini_embedding_model: str = "gemmini-embedding-1"
 
     # Redis
     redis_url: str = "redis://localhost:6379/0"

@@ -10,7 +10,7 @@ A production-ready AI-powered UPSC/MPSC Study Operating System — your personal
 | Backend | FastAPI (Python), SQLAlchemy ORM, Pydantic |
 | Database | PostgreSQL |
 | Auth | JWT + Google OAuth |
-| AI | OpenAI API, Embeddings, Vector Search |
+| AI | OpenAI / Gemmini-compatible API, Embeddings, Vector Search |
 | OCR | Tesseract OCR |
 | Storage | Cloudinary / AWS S3 |
 | Deployment | Vercel (FE), Render/Railway (BE), Supabase/Neon (DB) |
@@ -132,7 +132,9 @@ python -m pytest tests/ -v
 
 ## AI Features (Demo Mode)
 
-If `OPENAI_API_KEY` is not set, the AI Mentor returns structured demo responses so you can test the UI without an API key. Set a valid key in `backend/.env` for full GPT-powered responses.
+If no AI provider is configured, the AI Mentor returns structured demo responses so you can test the UI without an API key.
+
+You can use OpenAI by setting `OPENAI_API_KEY`, or switch to a Gemmini-compatible service by setting `AI_PROVIDER=gemmini` and `GEMMINI_API_BASE_URL` in `backend/.env`.
 
 ## API Documentation
 

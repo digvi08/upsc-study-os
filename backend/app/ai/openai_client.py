@@ -1,4 +1,4 @@
-"""OpenAI client wrapper."""
+"""AI client wrapper supporting OpenAI and Gemmini providers."""
 from typing import Optional, AsyncGenerator
 import logging
 
@@ -9,22 +9,84 @@ logger = logging.getLogger(__name__)
 _client = None
 
 
+def _has_openai_key() -> bool:
+    return bool(settings.openai_api_key and not settings.openai_api_key.startswith("sk-your"))
+
+
+def _select_provider() -> str:
+    provider = (settings.ai_provider or "auto").strip().lower()
+    if provider == "auto":
+        if settings.gemmini_api_base_url:
+            return "gemmini"
+        if _has_openai_key():
+            return "openai"
+        return "demo"
+    if provider in {"openai", "gemmini"}:
+        return provider
+    return "demo"
+
+
 def _get_client():
     global _client
-    if _client is None:
-        if not settings.openai_api_key or settings.openai_api_key.startswith("sk-your"):
+    if _client is not None:
+        return _client
+
+    provider = _select_provider()
+    if provider == "openai":
+        if not _has_openai_key():
             return None
         from openai import AsyncOpenAI
         _client = AsyncOpenAI(api_key=settings.openai_api_key)
+    elif provider == "gemmini":
+        if not settings.gemmini_api_base_url:
+            return None
+        from openai import AsyncOpenAI
+        kwargs = {
+            "base_url": settings.gemmini_api_base_url,
+            "_enforce_credentials": False,
+        }
+        if settings.gemmini_api_key:
+            kwargs["api_key"] = settings.gemmini_api_key
+        _client = AsyncOpenAI(**kwargs)
+    else:
+        return None
+
     return _client
 
 
+def _default_model() -> str:
+    provider = _select_provider()
+    if provider == "gemmini":
+        return settings.gemmini_model
+    return settings.openai_model
+
+
+def _default_embedding_model() -> str:
+    provider = _select_provider()
+    if provider == "gemmini":
+        return settings.gemmini_embedding_model
+    return settings.openai_embedding_model
+
+
 def _mock_response(messages: list) -> str:
-    """Fallback when OpenAI is not configured (development/demo)."""
+    """Fallback when no AI provider is configured."""
     user_msg = next((m["content"] for m in reversed(messages) if m["role"] == "user"), "")
+    provider = _select_provider()
+    if provider == "gemmini":
+        prompt = (
+            f"Gemmini API base URL is not configured. Set `GEMMINI_API_BASE_URL` in `.env` to use Gemmini." 
+            f"If your Gemmini endpoint needs authorization, also set `GEMMINI_API_KEY`."
+        )
+    elif provider == "openai":
+        prompt = "OpenAI API key is not configured. Configure `OPENAI_API_KEY` in `.env` for full AI responses."
+    else:
+        prompt = (
+            "No AI provider is configured. Set `AI_PROVIDER=gemmini` and `GEMMINI_API_BASE_URL`, "
+            "or set `OPENAI_API_KEY` to use OpenAI."
+        )
     return (
         f"**AI Mentor (Demo Mode)**\n\n"
-        f"OpenAI API key is not configured. Configure `OPENAI_API_KEY` in `.env` for full AI responses.\n\n"
+        f"{prompt}\n\n"
         f"**Your question:** {user_msg[:500]}\n\n"
         f"**Suggested approach:**\n"
         f"- Define the concept clearly in the introduction\n"
@@ -62,14 +124,14 @@ async def chat_completion(
     max_tokens: int = 2000,
     stream: bool = False,
 ) -> str | AsyncGenerator:
-    """Get a chat completion from OpenAI."""
+    """Get a chat completion from the configured AI provider."""
     client = _get_client()
     if client is None:
         return _mock_response(messages)
 
     try:
         response = await client.chat.completions.create(
-            model=model or settings.openai_model,
+            model=model or _default_model(),
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
@@ -79,19 +141,19 @@ async def chat_completion(
             return response
         return response.choices[0].message.content
     except Exception as e:
-        logger.error(f"OpenAI API error: {e}")
+        logger.error(f"AI provider error: {e}")
         raise
 
 
 async def get_embedding(text: str) -> list[float]:
-    """Get text embedding from OpenAI."""
+    """Get text embedding from the configured AI provider."""
     client = _get_client()
     if client is None:
         return [0.0] * 1536
 
     try:
         response = await client.embeddings.create(
-            model=settings.openai_embedding_model,
+            model=_default_embedding_model(),
             input=text,
         )
         return response.data[0].embedding
@@ -116,7 +178,7 @@ async def stream_chat_completion(
 
     try:
         stream = await client.chat.completions.create(
-            model=model or settings.openai_model,
+            model=model or _default_model(),
             messages=messages,
             temperature=temperature,
             max_tokens=max_tokens,
@@ -126,5 +188,5 @@ async def stream_chat_completion(
             if chunk.choices[0].delta.content:
                 yield chunk.choices[0].delta.content
     except Exception as e:
-        logger.error(f"OpenAI streaming error: {e}")
+        logger.error(f"AI provider streaming error: {e}")
         raise

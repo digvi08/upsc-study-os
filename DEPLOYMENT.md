@@ -79,7 +79,10 @@ Copy from `backend/.env.production.example`:
 | `DEBUG` | `false` |
 | `ALLOWED_ORIGINS` | `https://YOUR-APP.vercel.app` *(set after Step 4)* |
 | `FRONTEND_URL` | `https://YOUR-APP.vercel.app` |
+| `AI_PROVIDER` | Optional (`auto`, `openai`, or `gemmini`) |
 | `OPENAI_API_KEY` | Optional |
+| `GEMMINI_API_BASE_URL` | Optional |
+| `GEMMINI_API_KEY` | Optional |
 | `GOOGLE_CLIENT_ID` | Optional |
 | `GOOGLE_CLIENT_SECRET` | Optional |
 
