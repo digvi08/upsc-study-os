@@ -30,7 +30,9 @@ class Settings(BaseSettings):
     port: int = 8000
 
     # Database
-    database_url: str
+    # Default to a local SQLite file for easy local development and simple deploys.
+    # Can still be overridden by setting DATABASE_URL in the environment to a Postgres/Neon URL.
+    database_url: str = "sqlite:///./data/dev.db"
     database_pool_size: int = 10
     database_max_overflow: int = 20
 

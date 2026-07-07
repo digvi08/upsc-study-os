@@ -19,6 +19,8 @@ def _compile_jsonb_for_sqlite(type_, compiler, **kw):
 def _compile_uuid_for_sqlite(type_, compiler, **kw):
     return "CHAR(36)"
 
+from pathlib import Path
+
 logger = logging.getLogger(__name__)
 
 # Neon pooler: keep SQLAlchemy pool small to avoid exhausting serverless connections
@@ -27,6 +29,19 @@ _max_overflow = settings.database_max_overflow
 if settings.uses_neon_pooler:
     _pool_size = min(_pool_size, 5)
     _max_overflow = min(_max_overflow, 5)
+
+# If using a local SQLite file DB, ensure the parent directory exists so SQLAlchemy can create the file.
+if settings.database_url.startswith("sqlite"):
+    # Expect formats like sqlite:///./data/dev.db or sqlite:///absolute/path.db
+    try:
+        # Extract path after the scheme (three slashes)
+        path_part = settings.database_url.split("///", 1)[1] if "///" in settings.database_url else settings.database_url.split("//", 1)[1]
+        db_path = Path(path_part).expanduser()
+        if db_path.parent and not db_path.parent.exists():
+            db_path.parent.mkdir(parents=True, exist_ok=True)
+    except Exception:
+        # Non-fatal: if parsing fails, continue and let SQLAlchemy raise any file errors
+        logger.debug("Could not auto-create parent dir for sqlite database (parsing failed).")
 
 engine = create_engine(
     settings.database_url,
