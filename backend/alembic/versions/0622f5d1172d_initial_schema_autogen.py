@@ -1,7 +1,7 @@
-"""Initial schema
+"""initial schema autogen
 
-Revision ID: 001
-Revises:
+Revision ID: 0622f5d1172d
+Revises: d11e0f7b09b9
 Create Date: 2026-07-07 18:59:39.627551
 
 """
@@ -12,7 +12,7 @@ from sqlalchemy.dialects import postgresql
 
 
 # revision identifiers, used by Alembic.
-revision = '001'
+revision = '0622f5d1172d'
 down_revision = None
 branch_labels = None
 depends_on = None

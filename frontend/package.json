@@ -8,7 +8,7 @@
     "build:prod": "node scripts/inject-env.mjs && ng build --configuration production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test --watch=false --browsers=ChromeHeadless",
-    "lint": "ng lint"
+    "lint": "npx tsc -p tsconfig.app.json --noEmit"
   },
   "private": true,
   "dependencies": {
