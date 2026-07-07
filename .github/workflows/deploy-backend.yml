@@ -1,0 +1,50 @@
+name: Deploy Backend (migrations + optional deploy)
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  migrate-and-deploy:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      REDIS_URL: ${{ secrets.REDIS_URL }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run database migrations
+        working-directory: backend
+        run: |
+          # Ensure .env exists and has DATABASE_URL
+          cp .env.example .env || true
+          python - <<'PY'
+import os
+s = ''
+if os.path.exists('.env'):
+  with open('.env','r') as f:
+    s = f.read()
+if 'DATABASE_URL' not in s:
+  s += '\nDATABASE_URL=' + os.environ.get('DATABASE_URL','') + '\n'
+with open('.env','w') as f:
+  f.write(s)
+print('Wrote .env with DATABASE_URL')
+PY
+          alembic upgrade head
+
+      - name: (Optional) Deploy to Railway
+        run: |
+          echo "Automatic Railway deploy is optional. Add RAILWAY_TOKEN and uncomment the deploy step in this workflow. See DEPLOYMENT_AUTOMATION.md for details."
