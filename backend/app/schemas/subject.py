@@ -43,7 +43,7 @@ class SubjectResponse(BaseModel):
 
 
 class TopicCreate(BaseModel):
-    subject_id: uuid.UUID
+    subject_id: Optional[uuid.UUID] = None
     parent_id: Optional[uuid.UUID] = None
     name: str = Field(..., min_length=1, max_length=255)
     description: Optional[str] = None

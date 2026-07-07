@@ -24,10 +24,7 @@ export class AIMentorService {
   constructor(private http: HttpClient) {}
 
   chat(request: AIQueryRequest, history?: ChatMessage[]): Observable<{ response: string }> {
-    const messages = history?.map(m => ({ role: m.role, content: m.content }));
-    return this.http.post<{ response: string }>(`${this.API}/chat`, request, {
-      params: messages ? {} : {},
-    });
+    return this.http.post<{ response: string }>(`${this.API}/chat`, request);
   }
 
   explainTopic(topic: string, subject?: string, mode = 'mains'): Observable<any> {

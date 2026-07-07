@@ -10,10 +10,10 @@ A production-ready AI-powered UPSC/MPSC Study Operating System — your personal
 | Backend | FastAPI (Python), SQLAlchemy ORM, Pydantic |
 | Database | PostgreSQL |
 | Auth | JWT + Google OAuth |
-| AI | OpenAI API, Embeddings, Vector Search |
+| AI | OpenAI / Gemmini-compatible API, Embeddings, Vector Search |
 | OCR | Tesseract OCR |
 | Storage | Cloudinary / AWS S3 |
-| Deployment | Vercel (FE), Render/Railway (BE), Supabase/Neon (DB) |
+| Deployment | Vercel (FE), Railway (BE), Supabase/Neon (DB) |
 
 ## Modules
 
@@ -132,15 +132,17 @@ python -m pytest tests/ -v
 
 ## AI Features (Demo Mode)
 
-If `OPENAI_API_KEY` is not set, the AI Mentor returns structured demo responses so you can test the UI without an API key. Set a valid key in `backend/.env` for full GPT-powered responses.
+If no AI provider is configured, the AI Mentor returns structured demo responses so you can test the UI without an API key.
+
+You can use OpenAI by setting `OPENAI_API_KEY`, or switch to a Gemmini-compatible service by setting `AI_PROVIDER=gemmini` and `GEMMINI_API_BASE_URL` in `backend/.env`.
 
 ## API Documentation
 
 Once backend is running, visit: `http://localhost:8000/docs`
 
-## Free Deployment (Vercel + Render + Neon)
+## Free Deployment (Vercel + Railway + Neon)
 
-Production-ready config included (`render.yaml`, `vercel.json`, env injection).
+Production-ready config included (`backend/Dockerfile`, `frontend/vercel.json`, env injection).
 
 See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for the full deploy checklist.
 
@@ -149,8 +151,8 @@ See **[DEPLOYMENT.md](./DEPLOYMENT.md)** for the full deploy checklist.
 | Platform | Key | Example |
 |----------|-----|---------|
 | Neon | `DATABASE_URL` | `postgresql://...@ep-xxx-pooler.neon.tech/neondb?sslmode=require` |
-| Render | `ALLOWED_ORIGINS` | `https://your-app.vercel.app` |
-| Vercel | `NG_APP_API_URL` | `https://your-api.onrender.com/api/v1` |
+| Railway | `ALLOWED_ORIGINS` | `https://your-app.vercel.app` |
+| Vercel | `NG_APP_API_URL` | `https://your-api.onrailway.app/api/v1` |
 
 ## License
 

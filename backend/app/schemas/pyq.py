@@ -1,11 +1,13 @@
 """PYQ schemas."""
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, List, Any
 from datetime import datetime
 import uuid
 
 
 class PYQCreate(BaseModel):
+    model_config = ConfigDict(protected_namespaces=())
+
     year: int = Field(..., ge=1979, le=2030)
     exam: str
     exam_name: str = "UPSC"
@@ -51,7 +53,7 @@ class PYQResponse(BaseModel):
     is_verified: bool
     created_at: datetime
 
-    model_config = {"from_attributes": True}
+    model_config = ConfigDict(from_attributes=True, protected_namespaces=())
 
 
 class PYQAnalysisRequest(BaseModel):
